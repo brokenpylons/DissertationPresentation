@@ -335,30 +335,48 @@
 \begin{frame}{Delovanje}
   \begin{itemize}
     \item Ena rekurzivna mreža prehodov (RTN)
-    \item Levi in desni kontekst
-    \item Delni vpogled v naprej (fractional lookahead)
+    \item Filtriranje glede na levi in desni kontekst
+    \item Delni vpogled v naprej (ohranjanje sinhronizacije)
+  \end{itemize}
+
+  \note[item]{Generira se samo ena mreža prehodov}
+  \note[item]{Arhitektura podobno generalizira pregledovanje, kot GLR generalizira LR.}
+  \note[item]{Kot lahko hkrati teče več procesov razčlenjevalnika lahko teče hkrati več procesov pregledovalnika.}
+  %\note[item]{Torej poskusimo vse smiselne prehode sekcije za razčlenjevanje in sekcije za pregledovanje}
+  \note[item]{Kot sem rekel je pregledovanje na splošno nedeterministično, torej ali najdemo ujemanje ali pa moramo nadaljevati, torej poskusimo oboje}
+  \note[item]{Proces pregledovalnika nadaljuje kako daleč lahko, razčlenjevalnik pa upošteva vsa ujemanja.}
+  \note[item]{Število ujemanj omejimo z uporabo levega in desnega konteksta LR avtomate, torej napovemo iz trenutnega stanja kaj lahko sledi, in ko najdemo ujemanje še preverimo ali lahko sledi naslednja črka, avtomatski vpogled naprej za pregledovalnik.}
+  \note[item]{Da se ohrani sinhronizacija procesov razčlenjevalnika in pregledovalnika uporabljamo delen vpogled naprej}
+\end{frame}
+
+\begin{frame}{Dodatne funkcionalnosti}
+  \begin{itemize}
     \item Ničelni leksikalni neterminali
     \item Razčlenjevanje brez pregledovalnika
     \item Produkcije neomejene dolžine
   \end{itemize}
 
-  \note[item]{Generira se samo ena mreža prehodov}
-  \note[item]{Arhitektura podobno generalizira pregledovanje, kot GLR generalizira LR.}
-  \note[item]{Kot lahko hkrati teče več procesov razčlenjevalnika lahko teče hkrati več procesov pregledovalnika}
-  %\note[item]{Torej poskusimo vse smiselne prehode sekcije za razčlenjevanje in sekcije za pregledovanje}
-  \note[item]{Kot sem rekel je pregledovanje na splošno nedeterministično, torej ali najdemo ujemanje ali pa moramo nadaljevati, torej poskusimo oboje}
-  \note[item]{Proces pregledovalnika nadaljuje kako daleč lahko, razčlenjevalnik pa upošteva vsa ujemanja}
-  \note[item]{Število ujemanj omejimo z uporabo levega in desnega konteksta LR avtomate, torej napovemo iz trenutnega stanja kaj lahko sledi, in ko najdemo ujemanje še preverimo ali lahko sledi naslednja črka, avtomatski vpogled naprej za pregledovalnik.}
-  \note[item]{Ničelni so lahko tudi terminali, podprt je način razčlenjevanja brez pregledovalnika in desne strani neomejene dolžine, Kleene star}
+  \note[item]{Ničelni so lahko tudi terminali, podprt je način razčlenjevanja brez pregledovalnika in desne strani neomejene dolžine, Kleene star.}
 \end{frame}
 
 \begin{frame}{Prednosti}
   \begin{itemize}
     \item Vgrajeni podjeziki (brez označevalcev)
+    \item Integrirana uniformna specifikacija
     \item Kompozicija specifikacij
+    \item Lažji razvoj specifikacij
+    \item Ohranjanje leksikalne strukture
+    \item Ekspresivna leksikalna sintaksa
   \end{itemize}
 
-  \note[item]{Leksikalna sintaksa se lahko razlikuje }
+  \note[item]{Leksikalna sintaksa se lahko razlikuje v različnih delih programskega jezika.}
+  \note[item]{Lahko se spreminja prosto, označevalci za spremembo leksikalne sintakse niso potrebni.}
+  \note[item]{Leksikalna in kontekstno-neodvisna sintaksa sta opisani z enim formalizmom.}
+  \note[item]{Ker so specifikacije zaprte pod unijo, konkatenacijo in Kleene zvezdico je mogoča kompozicija več specifikacij.}
+  \note[item]{Pri razvoju, lahko dodajamo poljubne produkcije in regularne definicije in nikoli ne pride do napake, saj naša arhitektura sprejme vse specifikacije.}
+  \note[item]{Pisec gramatike lahko doseže poljubno granulacijo tako, da namesto leksikalne sintakse uporabit kontekstno neodvisno.}
+  \note[item]{Leksiklana sintaksa podpira razširjene regularne izraze, tako da je na voljo tudi presek, razlika in komplement.}
+  \note[item]{Naša arhitektura ima vse prednosti razčlenjevanja brez pregledovalnika, in hkrati boljšo učinkovitost.}
 \end{frame}
 
 \begin{frame}{Eksperiment}
@@ -368,8 +386,8 @@
     \item Gramatike za \begin{itemize}
         \item JSON
         \item ANSI C
-        \item ISO 7185:1990 Pascal 
-        \item Fortran 90 
+        \item ISO 7185:1990 Pascal
+        \item Fortran 90
         \item VS COBOL II
     \end{itemize}
     \item Vzorčenje iz verjetnostnih gramatik in avtomat
@@ -591,6 +609,18 @@
 
 \begin{frame}{Objava}
   \begin{large}
+    {Simultaneous multiple representation editing environment for primary school education\par}
+  \end{large}
+  \begin{small}
+    {Žiga Leber, Matej Črepinšek, Tomaž Kosar\par}
+  \end{small}
+  \begin{small}
+    {VL/HCC 2019}
+  \end{small}
+\end{frame}
+
+\begin{frame}{Objava}
+  \begin{large}
     {RNGSGLR: Generalization of the context-aware scanning architecture for all character-level context-free languages\par}
   \end{large}
   \begin{small}
@@ -603,6 +633,7 @@
   \vspace{2em}
   \faGithub\ brokenpylons/te
 \end{frame}
+
 
 \end{document}
 
