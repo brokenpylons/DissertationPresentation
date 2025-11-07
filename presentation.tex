@@ -1,0 +1,608 @@
+\documentclass{beamer}
+\usepackage{polyglossia}
+\usepackage{pgfpages}
+\usepackage{mdframed}
+\usepackage{tikz}
+\usepackage{outlines}
+\usepackage{setspace}
+\usepackage{enumerate}
+\usepackage{colonequals}
+\usepackage{halloweenmath}
+\usepackage{fontawesome5}
+\usetheme{metropolis}
+
+
+\newcommand{\NT}[1]{#1}
+\newcommand{\T}[1]{#1}
+\newcommand{\Term}[1]{\texttt{#1}}
+\newcommand{\Arrow}{::=}
+\newcommand{\Alphabet}{\Sigma}
+\newcommand{\ItemDot}{\,\text{\textbullet}\,}
+\newcommand{\ItemSep}{\enspace\:}
+\newcommand{\Seq}{\,}
+\newcommand{\Union}{\ |\ }
+\newcommand{\Inter}{\ \&\ }
+\newcommand{\Comp}{\lnot\,}
+\newcommand{\Diff}{\mathrel{-}}
+\newcommand{\Subclass}{U}
+
+\newcommand{\Year}[1]{{$^{\text{\textquotesingle}#1}$}}
+\newcommand{\YearD}[2]{{$^{\text{\textquotesingle}#1, \text{\textquotesingle}#2}$}}
+
+\usetikzlibrary{automata, positioning, arrows, fit, matrix, shapes.geometric, shapes.misc, calc, decorations.text}
+
+\setmainlanguage{slovenian}
+\setotherlanguages{english}
+
+%\setbeameroption{show only notes}
+\setbeameroption{show notes on second screen=right}
+\setbeamertemplate{note page}{
+  %\insertvrule{\paperheight}{white}%
+  \insertvrule{\paperheight}{note page.bg}%
+  \vskip-0.95\paperheight%
+  \usebeamercolor[fg]{note page}%
+  (\insertframenumber) \insertframetitle%
+  \insertnote%
+}
+
+\usepackage[binary-units]{siunitx}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,decorations.pathmorphing,automata,positioning,arrows,fit,matrix,shapes.geometric,shapes.misc,shapes.symbols,calc,external,patterns}
+
+\usepackage{pgfplots}
+\usepgfplotslibrary{external}
+\usepgfplotslibrary{colorbrewer}
+\pgfplotsset{
+  layers/multilayer/.define layer set={
+    background,
+    main,
+    foreground
+  }{},
+  set layers=multilayer
+}
+
+
+%\usepackage{pgfpages}
+%\pgfpagesuselayout{4 on 1}[a4paper, landscape, border shrink=5mm]
+
+\title{\large Generalizacija kontekstno zavednega pregledovanja za vse črkovne kontekstno neodvisne jezike}
+\date{\today}
+\author{Žiga Leber}
+\institute{Laboratorij za programirne metodologije}
+\titlegraphic{\includegraphics[height=1.2cm]{images/logo.pdf}}
+
+\definecolor{university}{HTML}{00698F}
+\definecolor{universitydark}{HTML}{003143}
+
+\setbeamercolor{normal text}{%
+  fg=universitydark,
+  bg=black!2
+}
+
+\setbeamercolor{alerted text}{%
+  fg=university
+}
+
+\selectlanguage{slovenian}
+
+\begin{document}
+\maketitle
+
+
+\begin{frame}{Kontekst}
+  \centering
+  \begin{tikzpicture}[tips=proper]
+    \tikzset{
+      ->,
+      node distance=0.7cm,
+      node/.style={},
+      desc/.append style={font=\scriptsize},
+    }
+    \node (ptr) {PTR};
+    \node[above=of ptr] (ast) {AST};
+
+    \node[below=of ptr] (sppf) {SPPF};
+    \node[below=of sppf] (text) {Tekst};
+
+    \draw (ast.south east) edge[<-, bend left=50] node[right, desc] {Okleščenje} (ptr.north east);
+    \draw (ast.south west) edge[->, bend right=50] node[left, desc] {Formatiranje} (ptr.north west);
+
+    \draw (sppf.north) edge[->] node[right, desc] {Razdvoumljanje} (ptr.south);
+
+    \draw (text.north) edge[->, very thick] node[right, desc] {\textbf{Razčlenjevanje}}  (sppf.south);
+    \draw (text.north west) edge[<-, bend left=50] node[left, desc] {Konkatenacija} (ptr.south west);
+
+    \draw (ast) edge[<-, loop above] node[above left, desc] {Strukturno urejanje} (ast);
+    \draw (text) edge[<-, loop below] node[below right, desc] {Tekstovno urejanje} (text);
+  \end{tikzpicture}
+
+  \note[item]{Predmet te doktorske disertacije je arhitektura za razčlenjevanje.}
+  \note[item]{Ta arhitektura ni bila razvita sama sebi v namen}
+  \note[item]{Torej, za začetek nekaj o področju, ki je motiviralo njen nastanek, o \textbf{urejevalnikih z več predstavitvami}.}
+  \note[item]{Urejevalniki z več predstavitvami, so sestavljeni iz več urejevalnih podoken.}
+  \note[item]{Ti urejevalniki v podoknih, so lahko različnega tipa, lahko so strukurni ali tekstovni.}
+  \note[item]{Torej lahko isti program urejamo na več načinov.}
+  \note[item]{Pri strukturnem urejanju direktno spreminjamo abstraktno sintaktično drevo, pri tekstovnem tekst.}
+  \note[item]{Glaven problem je kako sinhronizirati interne predstavitve.}
+\end{frame}
+
+\begin{frame}
+\includegraphics[height=0.9\textheight]{images/screenshot2.png}
+  \note[item]{Praktična aplikacija so urejevalniki, kjer je en urejevalnik bločni, drugi pa tekstovni.}
+  \note[item]{Primer takega urejevalnika je Poliglot.}
+  \note[item]{Urejanje bločne notacije spremeni tekstovno in obratno.}
+  \note[item]{Izkaže se, če otroke učiš samo v bločnem urejevalniku, po tem ne znajo programirati v tekstovnem programskem jeziku.}
+\end{frame}
+
+\begin{frame}{Motivacija}
+  Generiranje transformacijskega pogona iz deklarativne specifikacije
+  \begin{itemize}
+    \item Formalne rešitve $\gg$ Ad-hoc rešitve
+    \item Moč komponent (manj omejitev)
+    \item Kompromis: preprosta specifikacija $\rightarrow$ kompleksen pogon
+    \item Praktična uporabnost
+  \end{itemize}
+  \textbf{Arhitektura za razčlenjevanje RNGSGLR}
+
+  \note[item]{Ker je glavna komponenta urejevalnika z več predstavitvami, transformacijski pogon med internimi predstavitvami,
+  smo želeli izdelati generator iz deklerativne specifikacije.}
+  \note[item]{Osnova za tako specifikacijo je gramatika.}
+  \note[item]{Prvi problem, ki se pojavi je, da če gramatiki dodamo ad-hoc razširitve za razčlenjevanje,
+  je potem potrebno dodati ad-hoc rešitev tudi za ostale dele sistema, npr. za formatiranje, ker je vse povezano.}
+  \note[item]{Iz tega razloga smo poskušali držati formalnih rešitev.}
+  \note[item]{Drug problem pa je, da pri vizualni predstavitvi lahko labele vsebujejo karkoli, te labele potem postanejo leksemi, ki je potem potrebno razčleniti.}
+  \note[item]{Ampak, seveda če želiš imeti preprosto specifikacijo je kompromis, da sistem postane bolj kompleksen.}
+  \note[item]{Ključno je, da s tem ko dvignemo kompleksnost, zadeva ne postane neuporabno počasna ali pa pa so tabele velike 1GB.}
+\end{frame}
+
+\begin{frame}{Problem}
+  \begin{LARGE}
+    {Tradicionalna arhitektura za razčlenjevanje je omejena\par}
+  \end{LARGE}
+  \note[item]{Kar nas omejuje je, da je predpostavljeno, da je pregledovalnik determinističen.}
+  \note[item]{Kar v osnovi ni res, pregledovanje je nedeterministično.}
+  \note[item]{Da ga naredimo determinističnega, potrebujemo en kup ad-hoc pravil za razdvoumljanje, najdaljše ujemanje, prioriteta, vpogled v naprej, orakli, modifikacije gramatike.}
+  \note[item]{Torej tudi če imaš še tako močen razčlenjevalnik, ki sprejeme vse kontekstno neodvisne jezike, torej GLR, Early, CYK, Unger, ta v kombinaciji s tradicionalno arhitekturo za razčlenjevanje ne more razpoznati vseh črkovnih kontekstno neodvisnih jezikov.}
+\end{frame}
+
+\begin{frame}{Arhitekture za razčlenjevanje}
+  \centering
+  \begin{tikzpicture}[ampersand replacement=\!]
+    \tikzset{
+      ->,
+      node distance=0.7cm,
+      dot/.style={draw, circle, fill, inner sep=0.1cm},
+      edot/.style={draw, circle, inner sep=0.2cm},
+      desc/.append style={font=\scriptsize},
+      %every node/.style={ inner sep=0.5em, font=\footnotesize},
+    }
+
+    \matrix (m) [column sep=-0.2cm, row sep=0.2cm] {
+      \node[desc]{Tradicionalna}; \! \node[desc]{Nawrocki, Kaynes, PSLR, Context-aware}; \\
+      \node[edot] (parser) {}; \! \node[edot] (caparser) {}; \\[0.7cm]
+      \node[dot] (scanner) {}; \! \node[dot] (cascanner) {}; \\[1cm]
+
+      \node[desc]{Schrödinger, LAMB \& Fence}; \! \node[desc]{XGLR, \textbf{RNGSGLR}}; \! \node[desc]{NSLR, SGLR, RNSGLR}; \\
+      \node[edot] (nparser) {}; \! \node[edot] (gcaparser) {}; \! \node[edot] (sparser) {}; \\[0.7cm]
+      \node[dot] (nscanner) {}; \! \node[dot] (gcascanner) {}; \\
+    };
+    \draw (scanner) edge[->] (parser); 
+
+    \draw (cascanner) edge[<-, bend left=50] (caparser); 
+    \draw (caparser) edge[<-, bend left=50] (cascanner); 
+
+    \draw (nscanner) edge[->, double] (nparser); 
+
+    \draw (gcascanner) edge[<-, bend left=50] (gcaparser); 
+    \draw (gcaparser) edge[<-, double, bend left=50] (gcascanner); 
+  \end{tikzpicture}
+
+  \note[item]{Nismo prvi, ki smo poskušali rešiti ta problem. Predlaganih je bilo že nekaj arhitektur. Veliki krožec je tukaj razčlenjevalnik, mali krožec pa pregledovalnik.}
+  \note[item]{Ena rešitev je, da na podlagi tega kar smo videli do zdaj poskušamo napovedati naslednji terminal in to pošljemo pregledovalniku.
+    Pregledovalnik, tako ve kaj lahko sledi in je zato manj možnosti, da pride do konflikta.
+    Takšne arhitekture so ponavadi deterministične, torej če dobimo nazaj več možnosti so še vedno potrebna potrebna pravila za razdvoumljanje.}
+  \note[item]{Druga rešitev je, da vse možnosti pošlemu nedeterminističnemu razčlenjevalniku in se upoštevajo vse.
+    Problem je če želiš zaznati vse črkovne kontekstno neodvisne jezike, je vseh možnih opcij preveč.}
+  \note[item]{Tretja opcija je, da kombiniramo prejšnja dva pristopa. Tako deluje naša arhitektura.}
+  \note[item]{Četrta opcija pa je da preprosto ne uporabimo pregledovalnika.}
+\end{frame}
+
+\begin{frame}{Sorodna dela}
+  \centering
+  \begin{tikzpicture}
+    \tikzset{
+      ->,
+      node distance={1.5cm and 0.5cm},
+      every label/.append style={font=\footnotesize},
+      dot/.style={draw, circle, fill, inner sep=0.1cm},
+      edot/.style={draw, circle, inner sep=0.1cm},
+      cdot/.style={draw, circle, fill,  inner sep=0.08cm},
+    }
+    \node[edot, label=below right:LR\Year{65}] (lr) {};
+
+    \node[dot, above left=1.5 and 3 of lr, label=below:GLR\Year{86}] (glr) {};
+
+    \node[edot, below left=1.5 and 1.1 of glr, label=below:Faster GLR\Year{99}] (fglr) {};
+    \node[edot, left=1.5 of fglr, label=below:GR\Year{03}] (rg) {};
+
+    \node[edot, above left=0 and 3 of lr, label=above right:NSLR\Year{89}] (nslr) {};
+
+    \node[dot, above right= 0.2 and 1.8 of glr, label=below:Schrödinger\Year{01}] (schrodinger) {};
+
+    \node[dot, above left=of glr, label=above right:Rekers\Year{92}] (rekers) {};
+    \node[edot, left=2 of glr, label=above right:SGLR\Year{97}] (sglr) {};
+    \node[edot, above left=1 and 0.7 of sglr, label=right:RNSGLR\Year{09}] (rnsglr) {};
+    \node[dot, above left= 1 and 1.5 of rekers, label=above:RNGLR\Year{06}] (rnglr) {};
+
+    \node[dot, above right= 1 and 0.8 of lr, label=above right:Kaynes\Year{07}] (kaynes) {};
+    \node[dot, right=1.5 of kaynes, label=above right:Nawrocki\Year{91}] (nawrocki) {};
+    \node[edot, above right=of kaynes, label=above right:PSLR\Year{10}] (pslr) {};
+    \node[dot, above=of pslr, label=above right:Context-aware\YearD{07}{10}] (contextaware) {};
+
+    \node[dot, above right=0.9 and 0.4 of glr, label=above right:XGLR\Year{06}] (xglr) {};
+    \node[edot, above right=0.9 and 1.7 of xglr, label=above:LAMB\Year{11} \&\, Fence\Year{12}] (lamb) {};
+    \node[edot, above left=1.4 and 0.5 of lamb, label=above:{\textbf{RNGSGLR}}] (rngsglr) {};
+    \node[cdot] (rngsglrout) at (rngsglr) {};
+
+    \draw (lr) edge[->, bend left] (nslr);
+    \draw (lr) edge[->] (glr);
+    \draw (lr) edge[->, bend right] (nawrocki);
+    \draw (lr) edge[->] (kaynes);
+    \draw (lr) edge[->, bend left] (pslr);
+    \draw (lr) edge[->, bend left] (contextaware);
+    \draw (glr) edge[->] (rnglr);
+    \draw (glr) edge[->] (xglr);
+    \draw (glr) edge[->] (schrodinger);
+    \draw (nslr) edge[->] (sglr);
+    \draw (glr) edge[->] (rekers);
+    \draw (rekers) edge[->] (xglr);
+    \draw (schrodinger) edge[->] (xglr);
+    \draw (schrodinger) edge[->] (lamb);
+    \draw (glr) edge[->] (sglr);
+    \draw (rekers) edge[->, bend right] (rnglr);
+    \draw (pslr) edge[->, bend right] (contextaware);
+    \draw (contextaware) edge[->, bend right] (pslr);
+    \draw (kaynes) edge[->] (pslr);
+    \draw (nawrocki) edge[->, bend right] (pslr);
+    \draw (nawrocki) edge[->] (kaynes);
+    \draw (nawrocki) edge[->, bend right=45] (contextaware);
+    \draw (kaynes) edge[->, bend right] (lamb);
+    \draw (rnglr) edge[->, bend right] (rnsglr);
+    \draw (sglr) edge[->, bend left] (rnsglr);
+
+    \draw (glr) edge[->, bend right] (fglr);
+    \draw (fglr) edge[->] (rg);
+
+    \draw (rnglr) edge[->, bend left=10] (rngsglr);
+    \draw (contextaware) edge[->, bend right=10] (rngsglr);
+  \end{tikzpicture}
+
+  \note[item]{To je mreža sorodnih del. Polni krožci so tista dela iz katerih smo nekaj vzeli.}
+  \note[item]{Prvi deli na tem področju, sta bili Narwrocki in NSLR.}
+  \note[item]{Context-aware scanning in pseudo-scanerless sta bili dve doktorski nalogi na to temo 2010.}
+  \note[item]{Ideja je pri obeh je zelo podobna, to sta tudi avtorja sama ugotovila}.
+  \note[item]{Kot razčlenjevalnik uporabljamo GLR.}
+  \note[item]{Za podporo epsilon gramatikah pa uporabljamo rešitev RNGLR.}
+  \note[item]{Kar je še vredno omeni je, da je SGLR nastal pred to razširitvijo.}
+  \note[item]{Schrodingers token je delna rešitev problema, pri nas se lahko leksemi prekrivajo.}
+  \note[item]{Za LAMB in Fence, bi lahko rekli, da ima enako moč kot naša arhitektura, samo zadeva ne gre praktično skozi.}
+  \note[item]{Kaynes je tudi omenil podoben algoritem, generalized skener.}
+\end{frame}
+
+
+\begin{frame}{Predlagana arhitektura RNGSGLR}
+  \begin{itemize}
+    \item Kontekstno zavedno pregledovanje + RNGLR + $\mathwitch$
+    \item Sprejme vse črkovne kontekstno neodvisne jezike in vse specifikacije
+    \item Razdvoumljanje ni potrebno za črkovne kontekstno neodvisne jezike
+    \item Konceptualno neomejen vpogled v najprej
+    \item Pretočna (on-line)
+  \end{itemize}
+  \note[item]{Naš algoritem uporablja kot osnovo kontekstno zavedno skeniranje in RNGLR oz. GLR.}
+  \note[item]{Ampak to ni trivialna kombinacija obeh idej, idejo so že omenili v članku za kontekstno zavedno pregledovanje, prav tako že obstaja praktična implementacija, ki se imenuje Tree Sitter}
+  \note[item]{Torej par lastnosti, prednosti}
+  \note[item]{Arhitektura sprejme vse črkovne CFL in vse specifikacije}
+  \note[item]{Razdvoumlanje ni potrebno za črkovne CFL}
+  \note[item]{V praksi to pomeni, da lahko vzameš katero koli gramatiko, npr. od Fortrana, COBOL iz interneta prirediš format in magično dela.}
+  \note[item]{Konceptualno je vpogled naprej, torej lookahead neomejen, to je zaradi nedeterminizma, poskusimo vse opcije in potem za tiste, ki uspejo izgleda kot da se magično vedno prav odločijo, podobno velja za GLR}
+  \note[item]{Arhitektura je pretočna, to se moda zdi samoumevno, ampak to ne velja za ostale nedeterministične algoritme, npr. XGLR, LAMB \& Fence. To je bilo glavno vodilo.}
+\end{frame}
+
+\begin{frame}{Hierarhija črkovnih jezikov}
+  \centering
+  \begin{tikzpicture}[ampersand replacement=\!]
+    \tikzset{
+      ->,
+      node distance=0.7cm,
+    }
+    \draw[rotate=-150, postaction={decorate}, decoration={text along path, text={|\tiny|Neomejeni / programski jeziki}, raise=0.1cm}] (0,0) circle (3.5);
+    \draw[rotate=-150, postaction={decorate}, decoration={text along path, text={|\tiny|Kontekstno odvisni jeziki}, raise=0.1cm}] (0,0) circle (3.0);
+    \filldraw[rotate=-150, fill=universitydark!10, postaction={decorate}, decoration={text along path, text={|\tiny|Nedeterministični kontekstno neodvisni jeziki}, raise=0.1cm}]  (0,0) circle (2.5);
+    \draw[rotate=-150, dotted, postaction={decorate}, decoration={text along path, text={|\tiny|Skoraj deterministični kontekstno neodvisni jeziki}, raise=0.1cm}]  (0,0) circle (2.0);
+    \draw[rotate=-150, fill=universitydark!20, postaction={decorate}, decoration={text along path, text={|\tiny|Deterministični kontekstno neodvisni jeziki}, raise=0.1cm}] (0,0) circle (1.5);
+  \end{tikzpicture}
+
+  \note[item]{To je hierarhija črkovnih jezikov (ki je enaka tudi za jezike na splošno).}
+  \note[item]{Naša arhitektura se za deterministične kontekstno neodvisne jezike degenerira v kontekstno zavedno skeniranje, torej delujeta čisto enako}
+  \note[item]{Problem je edino, da v tem razredu ni praktičnih programskih jezikov, elementi teh jezikov ne smejo biti predpona drug drugemu, torej so problem že cela števila, ker so vse predpone tudi veljavna cela števila.}
+  \note[item]{Praktične gramatike programskih jezikov so skoraj deterministične, torej nedeterministične ampak ne preveč}
+  \note[item]{Določen del teh se da razrešiti z pravili za razdvoumljanje, torej jih lahko sprejme tudi kontekstno zavedno pregledovanje}
+  \note[item]{Naša arhitektura lahko sprejem tudi nedeterministične.}
+  \note[item]{Programski jeziki, pa so na splošno neomejeni, če bi jih hoteli natančno opisati, ampak se zadovoljimo, da imamo dvoumno gramatiko in potem razrešimo konflikte}
+\end{frame}
+
+\begin{frame}{Delovanje}
+  \begin{itemize}
+    \item Ena rekurzivna mreža prehodov (RTN)
+    \item Levi in desni kontekst
+    \item Delni vpogled v naprej (fractional lookahead)
+    \item Ničelni leksikalni neterminali
+    \item Razčlenjevanje brez pregledovalnika
+    \item Produkcije neomejene dolžine
+  \end{itemize}
+
+  \note[item]{Generira se samo ena mreža prehodov}
+  \note[item]{Arhitektura podobno generalizira pregledovanje, kot GLR generalizira LR.}
+  \note[item]{Kot lahko hkrati teče več procesov razčlenjevalnika lahko teče hkrati več procesov pregledovalnika}
+  %\note[item]{Torej poskusimo vse smiselne prehode sekcije za razčlenjevanje in sekcije za pregledovanje}
+  \note[item]{Kot sem rekel je pregledovanje na splošno nedeterministično, torej ali najdemo ujemanje ali pa moramo nadaljevati, torej poskusimo oboje}
+  \note[item]{Proces pregledovalnika nadaljuje kako daleč lahko, razčlenjevalnik pa upošteva vsa ujemanja}
+  \note[item]{Število ujemanj omejimo z uporabo levega in desnega konteksta LR avtomate, torej napovemo iz trenutnega stanja kaj lahko sledi, in ko najdemo ujemanje še preverimo ali lahko sledi naslednja črka, avtomatski vpogled naprej za pregledovalnik.}
+  \note[item]{Ničelni so lahko tudi terminali, podprt je način razčlenjevanja brez pregledovalnika in desne strani neomejene dolžine, Kleene star}
+\end{frame}
+
+\begin{frame}{Prednosti}
+  \begin{itemize}
+    \item Vgrajeni podjeziki (brez označevalcev)
+    \item Kompozicija specifikacij
+  \end{itemize}
+
+  \note[item]{Leksikalna sintaksa se lahko razlikuje }
+\end{frame}
+
+\begin{frame}{Eksperiment}
+  \begin{itemize}
+    \item Primerjava učinkovitosti
+    \item Linearnost
+    \item Gramatike za \begin{itemize}
+        \item JSON
+        \item ANSI C
+        \item ISO 7185:1990 Pascal 
+        \item Fortran 90 
+        \item VS COBOL II
+    \end{itemize}
+    \item Vzorčenje iz verjetnostnih gramatik in avtomat
+    \item 100 datotek v velikosti med $\SI{1}{\kilo\byte}$ in $\SI{1}{\mega\byte}$
+  \end{itemize}
+  \note[item]{Primerjali smo učinkovitost z RNGLR v kombinaciji z kontekstno zavednim pregledovanjem in RNSGLR (uporabili smo naš algoritem v načinu brez pregledovalnika)}
+  \note[item]{Pripravili smo gramatike za JSON, C, Pascal, Fortran, Cobol}
+  \note[item]{Primere smo naključno generirali z vzorčenjem iz verjetnostnih gramatik (vsaka desna stran ima določeno verjetnost) in verjetnostnih avtomat (podobno kot Markovski modeli) naučenih iz naravnega primerka}
+  \note[item]{Primeri so samo sintaktično pravilni}
+  \note[item]{100 datotek, v velikosti 1kB do 1MB, naraščajoče po 10kB}
+  \note[item]{Vsak eksperiment smo izvedli 10 krat in nato povprečili}
+\end{frame}
+
+\begin{frame}{Rezultati RNGLR -- RNGSGLR}
+  \note[item]{Naša metoda in RNGLR v kombinaciji z kontekstno zavednim pregledovanjem, ki je bol učinkovito za največ 72\%}
+  \note[item]{Gre za kompromis med močjo in učinkovitostjo}
+  \note[item]{Razčlenjevanje je v obeh primerih linearno}
+\begin{tikzpicture}
+  \tikzset{
+    every mark/.append style={scale=0.4, line width=0.4pt},
+    font={\footnotesize}
+  }
+
+  \begin{axis}[
+    width=0.8\textwidth,
+    xmin=0, xmax=1000,
+    ymin=0, ymax=20,
+    ylabel={Time $[\si{\second}]$},
+    xlabel={Size $[\si{\kilo\byte}]$},
+    cycle list/Paired-10,
+  ]
+
+    \addplot+[only marks, mark=*]
+    table[x=json_classic_size, y=json_classic_time] {efficiencydata2.dat};
+    \label{json_classic}
+
+    \addplot+[only marks, mark=o]
+    table[x=json_size, y=json_time] {efficiencydata2.dat};
+    \label{json}
+
+    \addplot+[only marks, mark=square*]
+    table[x=pascal_classic_size, y=pascal_classic_time] {efficiencydata2.dat};
+    \label{pascal_classic}
+
+    \addplot+[only marks, mark=square]
+    table[x=pascal_size, y=pascal_time] {efficiencydata2.dat};
+    \label{pascal}
+
+    \addplot+[only marks, mark=triangle*]
+    table[x=c_classic_size, y=c_classic_time] {efficiencydata2.dat};
+    \label{c_classic}
+
+    \addplot+[only marks, mark=triangle]
+    table[x=c_size, y=c_time] {efficiencydata2.dat};
+    \label{c}
+
+    \addplot+[only marks, mark=diamond*]
+    table[x=fortran_classic_size, y=fortran_classic_time] {efficiencydata2.dat};
+    \label{fortran_classic}
+
+    \addplot+[only marks, mark=diamond]
+    table[x=fortran_size, y=fortran_time] {efficiencydata2.dat};
+    \label{fortran}
+
+    \addplot+[only marks, mark=pentagon*]
+    table[x=cobol_classic_size, y=cobol_classic_time] {efficiencydata2.dat};
+    \label{cobol_classic}
+
+    \addplot+[only marks, mark=pentagon]
+    table[x=cobol_size, y=cobol_time] {efficiencydata2.dat};
+    \label{cobol}
+
+
+    \matrix[
+        matrix of nodes,
+        anchor=north west,
+        inner sep=0.2em,
+        ampersand replacement=\&,
+        nodes={font=\footnotesize},
+        column 1/.style={anchor=base east},
+        column 2/.style={anchor=base west},
+        column 3/.style={anchor=base west}
+      ] at([xshift=1ex,yshift=-1ex]current axis.north west) {
+        JSON \&[1em]  \ref{json_classic} \ RNGLR \& \ref{json} \ RNGSGLR  \\
+        Pascal \& \ref{pascal_classic} \ RNGLR \& \ref{pascal} \ RNGSGLR \\
+        C \&       \ref{c_classic} \ RNGLR \& \ref{c} \ RNGSGLR \\
+        Fortran \& \ref{fortran_classic} \ RNGLR \& \ref{fortran} \ RNGSGLR \\
+        COBOL \&   \ref{cobol_classic} \ RNGLR \& \ref{cobol} \ RNGSGLR \\
+    };
+  \end{axis}
+\end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Rezultati RNSGLR -- RNGSGLR}
+  \note[item]{Razčlenjevanje brez pregledovalnika in naša metoda, naša metoda je za vsaj za 42\% bolj učinkovita}
+  \note[item]{Nepredvidljiva učinkovitost pri Cobolu je, ker je treba odstraniti ključne besede pri identifikatorjih, v gramatiki operacija razlike ni podprta.}
+
+\begin{tikzpicture}
+  \tikzset{
+    every mark/.append style={scale=0.4, line width=0.4pt},
+    font={\footnotesize}
+  }
+
+  \begin{axis}[
+    width=0.8\textwidth,
+    xmin=0, xmax=1000,
+    ymin=0, ymax=50,
+    ylabel={Time $[\si{\second}]$},
+    xlabel={Size $[\si{\kilo\byte}]$},
+    cycle list/Paired-10,
+  ]
+
+    \addplot+[only marks, mark=*]
+    table[x=json_scannerless_size, y=json_scannerless_time] {efficiencydata2.dat};
+    \label{json_scannerless}
+
+    \addplot+[only marks, mark=o]
+    table[x=json_size, y=json_time] {efficiencydata2.dat};
+    \label{json}
+
+    \addplot+[only marks, mark=square*]
+    table[x=pascal_scannerless_size, y=pascal_scannerless_time] {efficiencydata2.dat};
+    \label{pascal_scannerless}
+
+    \addplot+[only marks, mark=square]
+    table[x=pascal_size, y=pascal_time] {efficiencydata2.dat};
+    \label{pascal}
+
+    \addplot+[only marks, mark=triangle*]
+    table[x=c_scannerless_size, y=c_scannerless_time] {efficiencydata2.dat};
+    \label{c_scannerless}
+
+    \addplot+[only marks, mark=triangle]
+    table[x=c_size, y=c_time] {efficiencydata2.dat};
+    \label{c}
+
+    \addplot+[only marks, mark=diamond*]
+    table[x=fortran_scannerless_size, y=fortran_scannerless_time] {efficiencydata2.dat};
+    \label{fortran_scannerless}
+
+    \addplot+[only marks, mark=diamond]
+    table[x=fortran_size, y=fortran_time] {efficiencydata2.dat};
+    \label{fortran}
+
+    \addplot+[only marks, mark=pentagon*]
+    table[x=cobol_scannerless_size, y=cobol_scannerless_time] {efficiencydata2.dat};
+    \label{cobol_scannerless}
+
+    \addplot+[only marks, mark=pentagon]
+    table[x=cobol_size, y=cobol_time] {efficiencydata2.dat};
+    \label{cobol}
+
+
+    \matrix[
+        matrix of nodes,
+        anchor=north west,
+        inner sep=0.2em,
+        ampersand replacement=\&,
+        nodes={font=\footnotesize},
+        column 1/.style={anchor=base east},
+        column 2/.style={anchor=base west},
+        column 3/.style={anchor=base west}
+      ] at([xshift=1ex,yshift=-1ex]current axis.north west) {
+        JSON \&[1em]  \ref{json_scannerless} \ RNSGLR \& \ref{json} \ RNGSGLR  \\
+        Pascal \& \ref{pascal_scannerless} \ RNSGLR \& \ref{pascal} \ RNGSGLR \\
+        C \&       \ref{c_scannerless} \ RNSGLR \& \ref{c} \ RNGSGLR \\
+        Fortran \& \ref{fortran_scannerless} \ RNSGLR \& \ref{fortran} \ RNGSGLR \\
+        COBOL \&   \ref{cobol_scannerless} \ RNSGLR \& \ref{cobol} \ RNGSGLR \\
+    };
+  \end{axis}
+\end{tikzpicture}
+
+\end{frame}
+
+\begin{frame}{Teza}
+  Na podlagi kontekstno zavednega pregledovanja je mogoče razviti arhitekturo na podlagi pregledovalnika za vse črkovne kontekstno neodvisne jezike.
+  Predlagana arhitektura je praktično uporabna, kar pomeni da sta pretočnost  in velikost tabel primerljiva z osnovno metodo za črkovne (skoraj) deterministične kontekstno neodvisne jezike.
+  Čas procesiranja je za (skoraj) deterministične kontekstno neodvisne jezike linearno odvisen od dolžine vhodnega niza.
+  Čas procesiranja je za nedeterministične kontekstno neodvisne jezike relativen glede na količino nedeterminizma in je v najslabšem primeru polinomsko odvisen od dolžine vhodnega niza.
+\end{frame}
+
+\begin{frame}{Hipoteza 1}
+   Predlagana arhitektura sprejme vse črkovne kontekstno neodvisne jezike.
+
+   \textbf{Potrjena}
+  \note[item]{Dela za vse črkovne kontekstno neodvisne jezike, za to imamo formalen dokaz}
+\end{frame}
+
+\begin{frame}{Hipoteza 2}
+   Pretočnost $(|\omega| \cdot t^{-1})$, kjer je $\omega$ vhoden niz in $t$ čas procesiranja, za črkovne skoraj deterministične jezike pri predlagani arhitekturi, ni več kot 80\% slabša kot za RNGLR v kombinaciji s kontekstno zavednim pregledovanjem.
+
+   \textbf{Potrjena}
+  \note[item]{Pretočnost je od osnovne metode lahko samo slabša, ker je osnova metoda deterministični posebni primer. Kot zgornjo mejo smo postavili 80\%}
+  \note[item]{Torej merimo več ali vpliv dodatnih podatkovnih struktur. Podobno GLR tudi dela bolj počasi od LR}
+  \note[item]{Za gramatike z presledki pa je še dodatno še enkrat bolj počasno, ker je potrebno procesirati dva krat več simbolov.}
+\end{frame}
+
+\begin{frame}{Hipoteza 3}
+  Tabele za akcije, prehode in avtomat, so pri predlagani arhitekturi enako velike, kot za RNGLR v kombinaciji s kontekstno zavednim pregledovanjem, za leksikalno $\varepsilon$-proste gramatike.
+
+  \textbf{Potrjena}
+  \note[item]{Tukaj se moramo omejiti na gramatike kjer terminali ne morejo biti nullable, drugih kontekstno zavedo skeniranje ne more podpreti in primerjava ni preveč smiselna}
+  \note[item]{Obstaja varianta kontekstno zavednega pregledovanja, kjer se izgradi avtomat za vsako stanje LR avtomata. Naša arhitektura ima enako velike tabele}
+\end{frame}
+
+\begin{frame}{Hipoteza 4}
+  Za črkovne (skoraj) deterministične jezike je čas procesiranja pri naši arhitekturi, linearno odvisen od dolžine vhodnega niza $O(|\omega|)$, kjer je $\omega$ vhoden niz.
+
+  \textbf{Potrjena}
+\note[item]{Čas procesiranja je za skoraj deterministične, torej za navadne programske jezike linearen, kot je razvidno iz rezultatov, za deterministične gre dokazati}
+\end{frame}
+
+\begin{frame}{Hipoteza 5}
+  Za črkovne jezike je čas procesiranja pri predlagani arhitekturi v najslabšem primeru $O(|\omega|^{\hat{\beta} + 1})$, pri tem $O(|\omega|^{\hat{\beta} + 1})$ za razčlenjevanje in $O(|\omega|^2)$ za pregledovanje, kjer je $\hat{\beta}$ dolžina najdaljše desne strani produkcije in $\omega$ vhoden niz.
+
+  \textbf{Potrjena}
+  \note[item]{Časovno kompleksnost pa tudi gre dokazati}
+\end{frame}
+
+\begin{frame}{Objava}
+  \begin{large}
+    {RNGSGLR: Generalization of the context-aware scanning architecture for all character-level context-free languages\par}
+  \end{large}
+  \begin{small}
+    {Žiga Leber, Matej Črepinšek, Marjan Mernik, Tomaž Kosar\par}
+  \end{small}
+  \begin{small}
+    {MDPI Mathematics (A1)\par}
+  \end{small}
+
+  \vspace{2em}
+  \faGithub\ brokenpylons/te
+\end{frame}
+
+\end{document}
+
