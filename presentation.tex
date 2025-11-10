@@ -153,7 +153,7 @@
   \note[item]{Iz tega razloga smo poskušali držati formalnih rešitev.}
   \note[item]{Drug problem pa je, da pri vizualni predstavitvi lahko labele vsebujejo karkoli, te labele potem postanejo leksemi, ki je potem potrebno razčleniti.}
   \note[item]{Ampak, seveda če želiš imeti preprosto specifikacijo je kompromis, da sistem postane bolj kompleksen.}
-  \note[item]{Ključno je, da s tem ko dvignemo kompleksnost, zadeva ne postane neuporabno počasna ali pa pa so tabele velike 1GB.}
+  \note[item]{Ključno je, da s tem ko dvignemo kompleksnost, zadeva ne postane neuporabno počasna ali pa pa so tabele prevelike.}
 \end{frame}
 
 \begin{frame}{Problem}
@@ -178,7 +178,7 @@
       %every node/.style={ inner sep=0.5em, font=\footnotesize},
     }
 
-    \matrix (m) [column sep=-0.2cm, row sep=0.2cm] {
+    \matrix (m) [column sep=-0.6cm, row sep=0.2cm] {
       \node[desc]{Tradicionalna}; \! \node[desc]{Nawrocki, Kaynes, PSLR, Context-aware}; \\
       \node[edot] (parser) {}; \! \node[edot] (caparser) {}; \\[0.7cm]
       \node[dot] (scanner) {}; \! \node[dot] (cascanner) {}; \\[1cm]
@@ -198,7 +198,7 @@
     \draw (gcaparser) edge[<-, double, bend left=50] (gcascanner); 
   \end{tikzpicture}
 
-  \note[item]{Nismo prvi, ki smo poskušali rešiti ta problem. Predlaganih je bilo že nekaj arhitektur. Veliki krožec je tukaj razčlenjevalnik, mali krožec pa pregledovalnik.}
+  \note[item]{Nismo prvi, ki smo poskušali rešiti ta problem. Predlaganih je bilo že nekaj arhitektur. Veliki krožec je tukaj razčlenjevalnik, mali krožec pa pregledovalnik. Ti diagrami prikazujejo komunikacijo med njima.}
   \note[item]{Ena rešitev je, da na podlagi tega kar smo videli do zdaj poskušamo napovedati naslednji terminal in to pošljemo pregledovalniku.
     Pregledovalnik, tako ve kaj lahko sledi in je zato manj možnosti, da pride do konflikta.
     Takšne arhitekture so ponavadi deterministične, torej če dobimo nazaj več možnosti so še vedno potrebna potrebna pravila za razdvoumljanje.}
@@ -266,7 +266,7 @@
     \draw (kaynes) edge[->] (pslr);
     \draw (nawrocki) edge[->, bend right] (pslr);
     \draw (nawrocki) edge[->] (kaynes);
-    \draw (nawrocki) edge[->, bend right=45] (contextaware);
+    \draw (nawrocki) edge[->, bend right=50] (contextaware);
     \draw (kaynes) edge[->, bend right] (lamb);
     \draw (rnglr) edge[->, bend right] (rnsglr);
     \draw (sglr) edge[->, bend left] (rnsglr);
