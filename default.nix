@@ -33,7 +33,6 @@ stdenv.mkDerivation {
   '';
 
   buildInputs = [
-    libsForQt5.okular
     pympress
     (texlive.combine {
       inherit (texlive) scheme-small latexmk beamer mdframed zref needspace outlines halloweenmath pict2e fontawesome5 beamertheme-metropolis pgfopts siunitx pgfplots;

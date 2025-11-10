@@ -25,6 +25,8 @@
 \newcommand{\Comp}{\lnot\,}
 \newcommand{\Diff}{\mathrel{-}}
 \newcommand{\Subclass}{U}
+\newcommand{\Language}{\mathcal{L}}
+\newcommand{\Spec}{\Xi}
 
 \newcommand{\Year}[1]{{$^{\text{\textquotesingle}#1}$}}
 \newcommand{\YearD}[2]{{$^{\text{\textquotesingle}#1, \text{\textquotesingle}#2}$}}
@@ -90,7 +92,7 @@
 \maketitle
 
 
-\begin{frame}{Kontekst}
+\begin{frame}{Kontekst doktorske disertacije}
   \centering
   \begin{tikzpicture}[tips=proper]
     \tikzset{
@@ -166,7 +168,7 @@
   \note[item]{Torej tudi če imaš še tako močen razčlenjevalnik, ki sprejeme vse kontekstno neodvisne jezike, torej GLR, Early, CYK, Unger, ta v kombinaciji s tradicionalno arhitekturo za razčlenjevanje ne more razpoznati vseh črkovnih kontekstno neodvisnih jezikov.}
 \end{frame}
 
-\begin{frame}{Arhitekture za razčlenjevanje}
+\begin{frame}{Stanje tehnike}
   \centering
   \begin{tikzpicture}[ampersand replacement=\!]
     \tikzset{
@@ -175,6 +177,7 @@
       dot/.style={draw, circle, fill, inner sep=0.1cm},
       edot/.style={draw, circle, inner sep=0.2cm},
       desc/.append style={font=\scriptsize},
+      every label/.append style={font=\tiny},
       %every node/.style={ inner sep=0.5em, font=\footnotesize},
     }
 
@@ -185,7 +188,9 @@
 
       \node[desc]{Schrödinger, LAMB \& Fence}; \! \node[desc]{XGLR, \textbf{RNGSGLR}}; \! \node[desc]{NSLR, SGLR, RNSGLR}; \\
       \node[edot] (nparser) {}; \! \node[edot] (gcaparser) {}; \! \node[edot] (sparser) {}; \\[0.7cm]
-      \node[dot] (nscanner) {}; \! \node[dot] (gcascanner) {}; \\
+      \node[dot] (nscanner) {}; \! \node[dot] (gcascanner) {}; \\[0.7cm]
+
+      \node[edot, label=right:--\ razčlenjevalnik] (lparser) {}; \! \node[dot, label=right:--\ pregledovalnik] (lscanner) {};\\
     };
     \draw (scanner) edge[->] (parser); 
 
@@ -208,7 +213,7 @@
   \note[item]{Četrta opcija pa je da preprosto ne uporabimo pregledovalnika.}
 \end{frame}
 
-\begin{frame}{Sorodna dela}
+\begin{frame}{Stanje tehnike}
   \centering
   \begin{tikzpicture}
     \tikzset{
@@ -281,12 +286,12 @@
   \note[item]{To je mreža sorodnih del. Polni krožci so tista dela iz katerih smo nekaj vzeli.}
   \note[item]{Prvi deli na tem področju, sta bili Narwrocki in NSLR.}
   \note[item]{Context-aware scanning in pseudo-scanerless sta bili dve doktorski nalogi na to temo 2010.}
-  \note[item]{Ideja je pri obeh je zelo podobna, to sta tudi avtorja sama ugotovila}.
-  \note[item]{Kot razčlenjevalnik uporabljamo GLR.}
-  \note[item]{Za podporo epsilon gramatikah pa uporabljamo rešitev RNGLR.}
-  \note[item]{Kar je še vredno omeni je, da je SGLR nastal pred to razširitvijo.}
+  %\note[item]{Ideja je pri obeh je zelo podobna, to sta tudi avtorja sama ugotovila}.
+  %\note[item]{Kot razčlenjevalnik uporabljamo GLR.}
+  %\note[item]{Za podporo epsilon gramatikah pa uporabljamo rešitev RNGLR.}
+  %\note[item]{Kar je še vredno omeni je, da je SGLR nastal pred to razširitvijo.}
   \note[item]{Schrodingers token je delna rešitev problema, pri nas se lahko leksemi prekrivajo.}
-  \note[item]{Za LAMB in Fence, bi lahko rekli, da ima enako moč kot naša arhitektura, samo zadeva ne gre praktično skozi.}
+  %\note[item]{Za LAMB in Fence, bi lahko rekli, da ima enako moč kot naša arhitektura, samo zadeva ne gre praktično skozi.}
   \note[item]{Kaynes je tudi omenil podoben algoritem, generalized skener.}
 \end{frame}
 
@@ -309,7 +314,7 @@
   \note[item]{Arhitektura je pretočna, to se moda zdi samoumevno, ampak to ne velja za ostale nedeterministične algoritme, npr. XGLR, LAMB \& Fence. To je bilo glavno vodilo.}
 \end{frame}
 
-\begin{frame}{Hierarhija črkovnih jezikov}
+\begin{frame}{Predlagana arhitektura RNGSGLR: Moč}
   \centering
   \begin{tikzpicture}[ampersand replacement=\!]
     \tikzset{
@@ -325,14 +330,15 @@
 
   \note[item]{To je hierarhija črkovnih jezikov (ki je enaka tudi za jezike na splošno).}
   \note[item]{Naša arhitektura se za deterministične kontekstno neodvisne jezike degenerira v kontekstno zavedno skeniranje, torej delujeta čisto enako}
-  \note[item]{Problem je edino, da v tem razredu ni praktičnih programskih jezikov, elementi teh jezikov ne smejo biti predpona drug drugemu, torej so problem že cela števila, ker so vse predpone tudi veljavna cela števila.}
+  %\note[item]{Problem je edino, da v tem razredu ni praktičnih programskih jezikov, elementi teh jezikov ne smejo biti predpona drug drugemu, torej so problem že cela števila, ker so vse predpone tudi veljavna cela števila.}
   \note[item]{Praktične gramatike programskih jezikov so skoraj deterministične, torej nedeterministične ampak ne preveč}
   \note[item]{Določen del teh se da razrešiti z pravili za razdvoumljanje, torej jih lahko sprejme tudi kontekstno zavedno pregledovanje}
   \note[item]{Naša arhitektura lahko sprejem tudi nedeterministične.}
-  \note[item]{Programski jeziki, pa so na splošno neomejeni, če bi jih hoteli natančno opisati, ampak se zadovoljimo, da imamo dvoumno gramatiko in potem razrešimo konflikte}
+  \note[item]{Programski jeziki, pa so na splošno neomejeni.}
+  %\note[item]{Programski jeziki, pa so na splošno neomejeni, če bi jih hoteli natančno opisati, ampak se zadovoljimo, da imamo dvoumno gramatiko in potem razrešimo konflikte}
 \end{frame}
 
-\begin{frame}{Delovanje}
+\begin{frame}{Predlagana arhitektura RNGSGLR: Delovanje}
   \begin{itemize}
     \item Ena rekurzivna mreža prehodov (RTN)
     \item Filtriranje glede na levi in desni kontekst
@@ -349,7 +355,7 @@
   \note[item]{Da se ohrani sinhronizacija procesov razčlenjevalnika in pregledovalnika uporabljamo delen vpogled naprej}
 \end{frame}
 
-\begin{frame}{Dodatne funkcionalnosti}
+\begin{frame}{Predlagana arhitektura RNGSGLR: Dodatne funkcionalnosti}
   \begin{itemize}
     \item Ničelni leksikalni neterminali
     \item Razčlenjevanje brez pregledovalnika
@@ -359,7 +365,7 @@
   \note[item]{Ničelni so lahko tudi terminali, podprt je način razčlenjevanja brez pregledovalnika in desne strani neomejene dolžine, Kleene star.}
 \end{frame}
 
-\begin{frame}{Prednosti}
+\begin{frame}{Predlagana arhitektura RNGSGLR: Prednosti}
   \begin{itemize}
     \item Vgrajeni podjeziki (brez označevalcev)
     \item Integrirana uniformna specifikacija
@@ -381,8 +387,7 @@
 
 \begin{frame}{Eksperiment}
   \begin{itemize}
-    \item Primerjava učinkovitosti
-    \item Linearnost
+    \item Primerjava učinkovitosti z RNGLR v kombinaciji z kontekstno zavednim pregledovanjem in RNSGLR
     \item Gramatike za \begin{itemize}
         \item JSON
         \item ANSI C
@@ -401,7 +406,7 @@
   \note[item]{Vsak eksperiment smo izvedli 10 krat in nato povprečili}
 \end{frame}
 
-\begin{frame}{Rezultati RNGLR -- RNGSGLR}
+\begin{frame}{Eksperiment: Primerjava RNGLR -- RNGSGLR}
   \note[item]{Naša metoda in RNGLR v kombinaciji z kontekstno zavednim pregledovanjem, ki je bol učinkovito za največ 72\%}
   \note[item]{Gre za kompromis med močjo in učinkovitostjo}
   \note[item]{Razčlenjevanje je v obeh primerih linearno}
@@ -415,8 +420,8 @@
     width=0.8\textwidth,
     xmin=0, xmax=1000,
     ymin=0, ymax=20,
-    ylabel={Time $[\si{\second}]$},
-    xlabel={Size $[\si{\kilo\byte}]$},
+    ylabel={Čas $[\si{\second}]$},
+    xlabel={Velikost $[\si{\kilo\byte}]$},
     cycle list/Paired-10,
   ]
 
@@ -481,9 +486,9 @@
 \end{tikzpicture}
 \end{frame}
 
-\begin{frame}{Rezultati RNSGLR -- RNGSGLR}
+\begin{frame}{Eksperiment: Primerjava RNSGLR -- RNGSGLR}
   \note[item]{Razčlenjevanje brez pregledovalnika in naša metoda, naša metoda je za vsaj za 42\% bolj učinkovita}
-  \note[item]{Nepredvidljiva učinkovitost pri Cobolu je, ker je treba odstraniti ključne besede pri identifikatorjih, v gramatiki operacija razlike ni podprta.}
+  %\note[item]{Nepredvidljiva učinkovitost pri Cobolu je, ker je treba odstraniti ključne besede pri identifikatorjih, v gramatiki operacija razlike ni podprta.}
 
 \begin{tikzpicture}
   \tikzset{
@@ -495,8 +500,8 @@
     width=0.8\textwidth,
     xmin=0, xmax=1000,
     ymin=0, ymax=50,
-    ylabel={Time $[\si{\second}]$},
-    xlabel={Size $[\si{\kilo\byte}]$},
+    ylabel={Čas $[\si{\second}]$},
+    xlabel={Velikost $[\si{\kilo\byte}]$},
     cycle list/Paired-10,
   ]
 
@@ -567,19 +572,33 @@
   Predlagana arhitektura je praktično uporabna, kar pomeni da sta pretočnost  in velikost tabel primerljiva z osnovno metodo za črkovne (skoraj) deterministične kontekstno neodvisne jezike.
   Čas procesiranja je za (skoraj) deterministične kontekstno neodvisne jezike linearno odvisen od dolžine vhodnega niza.
   Čas procesiranja je za nedeterministične kontekstno neodvisne jezike relativen glede na količino nedeterminizma in je v najslabšem primeru polinomsko odvisen od dolžine vhodnega niza.
+
+  \note[item]{To je teza, ki jo bomo potrdili z naslednjimi hipotezami.}
 \end{frame}
 
 \begin{frame}{Hipoteza 1}
    Predlagana arhitektura sprejme vse črkovne kontekstno neodvisne jezike.
 
    \textbf{Potrjena}
-  \note[item]{Dela za vse črkovne kontekstno neodvisne jezike, za to imamo formalen dokaz}
+
+   \begin{scriptsize}
+     Razpoznavalnik je pravilen za dano specifikacijo $\Spec$, če sprejme vhoden niz $\omega$, če in samo če $\omega \in \Language{(\Spec)}$ in ga drugače zavrne.
+     Najprej pokažemo, če naš algoritem sprejme $\omega$ potem $\omega \in \Language{(\Spec)}$.
+     Nato pokažemo, če $\omega \in \Language{(\Spec)}$ potem naš algoritem sprejme $\omega$.
+     To naredimo tako, da pokažemo, da naš algoritem sprejme $\omega$ natanko tedaj, ko črkovni RNGLR razpoznavalnik za gramatike z regularnimi desnimi stranmi sprejme $\omega$.
+   \end{scriptsize}
+
+  \note[item]{Dela za vse črkovne kontekstno neodvisne jezike, za to imamo formalen dokaz.}
 \end{frame}
 
 \begin{frame}{Hipoteza 2}
-   Pretočnost $(|\omega| \cdot t^{-1})$, kjer je $\omega$ vhoden niz in $t$ čas procesiranja, za črkovne skoraj deterministične jezike pri predlagani arhitekturi, ni več kot 80\% slabša kot za RNGLR v kombinaciji s kontekstno zavednim pregledovanjem.
+   Pretočnost $(|\omega| \cdot t^{-1})$, kjer je $\omega$ vhoden niz in $t$ čas procesiranja, za črkovne skoraj deterministične jezike pri predlagani arhitekturi, ni več kot 80 \% slabša kot za RNGLR v kombinaciji s kontekstno zavednim pregledovanjem.
 
    \textbf{Potrjena}
+
+  \begin{scriptsize}
+    Pokažemo eksperimentalno, predlagana arhitektura je 72\%, 38\%, 57\%, 64\%, 47\% slabša za JSON, Pascal, C, COBOL, Fortran.
+  \end{scriptsize}
   \note[item]{Pretočnost je od osnovne metode lahko samo slabša, ker je osnova metoda deterministični posebni primer. Kot zgornjo mejo smo postavili 80\%}
   \note[item]{Torej merimo več ali vpliv dodatnih podatkovnih struktur. Podobno GLR tudi dela bolj počasi od LR}
   \note[item]{Za gramatike z presledki pa je še dodatno še enkrat bolj počasno, ker je potrebno procesirati dva krat več simbolov.}
@@ -589,6 +608,10 @@
   Tabele za akcije, prehode in avtomat, so pri predlagani arhitekturi enako velike, kot za RNGLR v kombinaciji s kontekstno zavednim pregledovanjem, za leksikalno $\varepsilon$-proste gramatike.
 
   \textbf{Potrjena}
+
+  \begin{scriptsize}
+    Velikost tabel je primerljiva s kontekstno zavednim pregledovanjem, kjer izgradimo avtomat za vsako stanje.
+  \end{scriptsize}
   \note[item]{Tukaj se moramo omejiti na gramatike kjer terminali ne morejo biti nullable, drugih kontekstno zavedo skeniranje ne more podpreti in primerjava ni preveč smiselna}
   \note[item]{Obstaja varianta kontekstno zavednega pregledovanja, kjer se izgradi avtomat za vsako stanje LR avtomata. Naša arhitektura ima enako velike tabele}
 \end{frame}
@@ -597,6 +620,10 @@
   Za črkovne (skoraj) deterministične jezike je čas procesiranja pri naši arhitekturi, linearno odvisen od dolžine vhodnega niza $O(|\omega|)$, kjer je $\omega$ vhoden niz.
 
   \textbf{Potrjena}
+
+  \begin{scriptsize}
+    Pokažemo eksperimentalno, čas procesiranja za JSON, Pascal, C, COBOL, Fortran, je linearno odvisen od dolžine vhodnega niza.
+  \end{scriptsize}
 \note[item]{Čas procesiranja je za skoraj deterministične, torej za navadne programske jezike linearen, kot je razvidno iz rezultatov, za deterministične gre dokazati}
 \end{frame}
 
@@ -604,34 +631,61 @@
   Za črkovne jezike je čas procesiranja pri predlagani arhitekturi v najslabšem primeru $O(|\omega|^{\hat{\beta} + 1})$, pri tem $O(|\omega|^{\hat{\beta} + 1})$ za razčlenjevanje in $O(|\omega|^2)$ za pregledovanje, kjer je $\hat{\beta}$ dolžina najdaljše desne strani produkcije in $\omega$ vhoden niz.
 
   \textbf{Potrjena}
+
+  \begin{scriptsize}
+    Časovna kompleksnost razčlenjevalnika je v veliki meri pogojena s številom korakov, ki so potrebni, da se poiščejo poti med procesiranjem redukcij.
+    Časovna kompleksnost pregledovalnika je pogojena z številom robov, ki jih lahko ima vsako vozlišče ustvarjeno z branjem znaka.
+  \end{scriptsize}
   \note[item]{Časovno kompleksnost pa tudi gre dokazati}
 \end{frame}
 
-\begin{frame}{Objava}
-  \begin{large}
-    {Simultaneous multiple representation editing environment for primary school education\par}
-  \end{large}
-  \begin{small}
-    {Žiga Leber, Matej Črepinšek, Tomaž Kosar\par}
-  \end{small}
-  \begin{small}
+\begin{frame}{Objave}
+  \setstretch{0.8}
+  \setlength{\parskip}{0.4cm}
+  \begin{scriptsize}
+    {RNGSGLR: Generalization of the context-aware scanning architecture for all character-level context-free languages}
+  \end{scriptsize}
+  \\
+  \begin{tiny}
+    {Žiga Leber, Matej Črepinšek, Marjan Mernik, Tomaž Kosar}
+  \end{tiny}
+  \\
+  \begin{tiny}
+    {Mathematics 2022, 10(14), 2436}
+  \end{tiny}
+  \par
+  \begin{scriptsize}
+    Simultaneous multiple representation editing environment for primary school education
+  \end{scriptsize}
+  \\
+  \begin{tiny}
+    {Žiga Leber, Matej Črepinšek, Tomaž Kosar}
+  \end{tiny}
+  \\
+  \begin{tiny}
     {VL/HCC 2019}
-  \end{small}
+  \end{tiny}
+  \par
+  \begin{scriptsize}
+    {Teaching Beginners to Program: should we start with block-based, text-based, or both notations?}
+  \end{scriptsize}
+  \\
+  \begin{tiny}
+    {Tomaž Kosar, Srđa Bjeladinović, Dragana Ostojić, Milica S. Škembarević, Žiga Leber, Olga A. Jejić, Filip Furtula, Miloš D. Ljubisavljević, Ivan S. Luković, Marjan Mernik}
+  \end{tiny}
+  \\
+  \begin{tiny}
+    {FedCSIS 2024}
+  \end{tiny}
 \end{frame}
 
-\begin{frame}{Objava}
-  \begin{large}
-    {RNGSGLR: Generalization of the context-aware scanning architecture for all character-level context-free languages\par}
-  \end{large}
-  \begin{small}
-    {Žiga Leber, Matej Črepinšek, Marjan Mernik, Tomaž Kosar\par}
-  \end{small}
-  \begin{small}
-    {MDPI Mathematics (A1)\par}
-  \end{small}
-
-  \vspace{2em}
+\begin{frame}
+  \begin{Huge}
+  Hvala za pozornost!\\[0.8em]
+  \end{Huge}
+  \begin{Large}
   \faGithub\ brokenpylons/te
+  \end{Large}
 \end{frame}
 
 
