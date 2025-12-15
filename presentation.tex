@@ -87,10 +87,10 @@
 %\usepackage{pgfpages}
 %\pgfpagesuselayout{4 on 1}[a4paper, landscape, border shrink=5mm]
 
-\title{\large Generalizacija kontekstno zavednega pregledovanja za vse črkovne kontekstno neodvisne jezike}
+\title{\large Generalization of the Context-Aware Scanning Architecture for All Character-Level Context-Free Languages}
 \date{\today}
 \author{Žiga Leber}
-\institute{Laboratorij za programirne metodologije}
+\institute{Programming methodology laboratory}
 \titlegraphic{\includegraphics[height=1.2cm]{images/logo.pdf}}
 
 \definecolor{university}{HTML}{00698F}
@@ -105,7 +105,7 @@
   fg=university
 }
 
-\selectlanguage{slovenian}
+\selectlanguage{english}
 
 \begin{document}
 \maketitle
@@ -156,10 +156,11 @@
   \begin{LARGE}
     {Combination of a scanner-based and a scannerless approach}\par
   \end{LARGE}
-  \note[item]{Unified algorithm like in a scannerless approach, one automaton, one set of tables, one data structure for parsing, but still conceptually using a scanner.}
-  \note[item]{The idea is to deconstruct scanner based parsing into its constituent parts, and reassemble them into a generalized algorithm.}
-  \note[item]{Combination of LR and LR' interpretations, and limited form of non-canonical parsing.}
-  \note[item]{The construction is the simplest possible that gives rise to such a parser.}
+  \note[item]{That means, we have a unified algorithm like in a scannerless approach, one automaton, one set of tables, one data structure for parsing, but still conceptually using a scanner.}
+  \note[item]{We deconstruct scanner based parsing into its constituent parts, and reassemble them into a generalized algorithm.}
+  \note[item]{Our algoritm generalizes scanning in the same way GLR generalizes LR.}
+  \note[item]{The main insight is that there is interpretation change at the boundary between the parser and the scanner, and a limited form of non-canonical parsing is used.}
+  \note[item]{In non-canonical parsing the parsing decision can be delayed and reductions can be performed on the rest of the input, then the reduced non-terminals are used as lookahead.}
 \end{frame}
 
 \begin{frame}{Construction}
@@ -178,10 +179,10 @@
   \end{enumerate}
 
   \note[item]{The construction starts with RRPG, these are grammars with regular expression in the right-hand side.}
+  \note[item]{The central formalism used is the recursive transition network (RTN).}
   \note[item]{The construction is the same as non-deterministic LR construction in Parsing Techniques.}
-  \note[item]{The difference is I use Brzozowski derivatives, instead of DeRemer derivatives, that way intersection, difference and complement are supported as well.}
-  \note[item]{LR is essentially a subset construction, where call transitions are collapsed into a loop, kernel and non-kernel items are joined.}
-  \note[item]{Limited form of early construction, the kernel items and non-kernel items are separated by a transition.}
+  \note[item]{The difference is that we use Brzozowski derivatives, instead of DeRemer derivatives, that way intersection, difference and complement are supported as well.}
+  \note[item]{Then the optimizations are applied.}
   \note[item]{Enhance, compute the cross product construction between unoptimized and optimized automaton.}
   \note[item]{Compute the lookahead from NULLABLE, FIRST, FOLLOW and add non-canonical transitions.}
 \end{frame}
@@ -189,17 +190,20 @@
 \begin{frame}{Regular right part grammar}
   \begin{equation*}
     \begin{aligned}
-      \_\LblSep\NT{S} &\Arrow_0 \NT{A} \Union \T{b} \Spc \Kleene{(\T{c} \Spc \T{b})}\\
-      \_\LblSep\NT{A} &\Arrow_1 \T{b} \Spc \T{c}
+      \_\LblSep\NT{S}' &\Arrow_0 \NT{S} \Spc \KleenePlus{\EOF}\\
+      \_\LblSep\NT{S} &\Arrow_1 \NT{A} \Union \T{b} \Spc \Kleene{(\T{c} \Spc \T{b})}\\
+      \_\LblSep\NT{A} &\Arrow_2 \T{b} \Spc \T{c}
     \end{aligned}
     \hspace{3em}
     \begin{aligned}
-      \_\LblSep\T{b} &\Arrow_2 \Term{x}\\
-      \_\LblSep\T{c} &\Arrow_3 \Term{y}
+      \_\LblSep\T{b} &\Arrow_3 \Term{x}\\
+      \_\LblSep\T{c} &\Arrow_4 \Term{y}\\
+      {}
     \end{aligned}
   \end{equation*}
 
   \note[item]{The right hand sides are regular expressions.}
+  \note[item]{The grammar is augmented with a start production.}
   \note[item]{The productions are labeled, the labels later end up labeling the sets of children in the parse forest.}
   \note[item]{In this case all productions are labeled with the null label, which means that nodes that end up labeled with this label get pruned.}
   \note[item]{And they are indexed, numbered sequentially.}
@@ -282,6 +286,7 @@
   \note[item]{If DeRemer derivatives were used that would mean that the dot is moved over the symbol.}
   \note[item]{With Brzozowski derivatives, a regular expression is computed with the symbol removed from the beginning.}
   \note[item]{Call transitions are added when there are non-terminals at the beginning of the regular expression.}
+  \note[item]{Connecting to an item for that non-terminal.}
 \end{frame}
 
 \begin{frame}{Optimized RTN}
@@ -346,9 +351,8 @@
   \end{tikzpicture}
   }
   \note[item]{The parser section are sub-RTNs reachable using call transitions with syntactic non-terminals, the scanner section are sub-RTNs reachable using call transitions with lexical non-terminals.}
-  \note[item]{The call transitions for syntactic non-terminals are collapsed into a loop.}
-  \note[item]{The call transitions for lexical non-terminals are collapsed into a single transition.}
-  \note[item]{Scanner section is the same as constructing an automaton for context-aware scanning for each LR state and connecting it with a call transition.}
+  \note[item]{LR is essentially a subset construction, where call transitions are collapsed into a loop, kernel and non-kernel items are joined.}
+  \note[item]{Limited form of automaton driven early construction, the kernel items and non-kernel items are separated by a transition.}
 \end{frame}
 
 \begin{frame}{Enhanced RTN}
@@ -405,6 +409,7 @@
   \end{tikzpicture}
   }
   \note[item]{We compute the cross-product construction, possible because the call transitions are collapsed into a loop.}
+  \note[item]{The edges of the enhanced RTN are labeled with enhanced symbols.}
   \note[item]{The enhanced automaton can be used to compute the entire right context.}
 \end{frame}
 
@@ -412,7 +417,7 @@
   \resizebox{!}{0.7\textheight}{
   \begin{tikzpicture}[tips=proper, node distance=1.4cm and 1.5cm, initial text=]
     \begin{scope}
-      \node [pstate, label={above left:(0, \NT{S})}] (0) {$0\quad 3$};
+      \node [pstate, label={above left:$(0, \NT{S}) \Arrow_1$}] (0) {$0\quad 3$};
       \node [pstate, right=of 0] (1) {$4\quad 4$};
       \node [pstate, below right=of 0] (2) {$3\quad 10$};
       \node [pstate, right=of 1] (3) {$5\quad 5$};
@@ -427,7 +432,7 @@
       \draw(5) edge[->, bend left] node[auto]{$(7, \T{b})$} (4);
     \end{scope}
     \begin{scope}[shift={(0, -4)}]
-      \node [pstate, label={above left:(0, \NT{A})}] (0) {$0\quad 11$};
+      \node [pstate, label={above left:$(0, \NT{A}) \Arrow_2$}] (0) {$0\quad 11$};
       \node [pstate, right=of 0] (1) {$4\quad 12$};
       \node [pstate, right=of 1] (2) {$5\quad 13$};
 
@@ -435,13 +440,13 @@
       \draw(1) edge[->] node[auto]{$(4, \T{c})$} (2);
     \end{scope}
     \begin{scope}[shift={(0, -6)}]
-      \node [pstate, label={above left:(0, \T{b})\ (5, \T{b})\ (7, \T{b})}] (0) {$8\quad 6$};
+      \node [pstate, label={above left:$(0, \T{b})\ (5, \T{b})\ (7, \T{b}) \Arrow_3$}] (0) {$8\quad 6$};
       \node [pstate, right=of 0] (1) {$9\quad 7$};
 
       \draw(0) edge[->] node[auto]{$(8, \Term{x})$} (1);
     \end{scope}
     \begin{scope}[shift={(0, -8)}]
-      \node [pstate, label={above left:(4, \T{c})\ (6, \T{c})}] (0) {$10\quad 8$};
+      \node [pstate, label={above left:$(4, \T{c})\ (6, \T{c}) \Arrow_4$}] (0) {$10\quad 8$};
       \node [pstate, right=of 0] (1) {$11\quad 9$};
 
       \draw(0) edge[->] node[auto]{$(10, \Term{y})$} (1);
@@ -450,8 +455,9 @@
   }
   \note[item]{Enhanced productions are extracted from the enhanced RTN.}
   \note[item]{Then NULLABLE, FIRST, FOLLOW are computed, which are used compute the lookahead.}
-  \note[item]{The reduce lookahead is computed, by first computing lookback and then FOLLOW of the enhanced symbol.}
-  \note[item]{In state 6, for item 4 the lookahead is computed as FOLLOW(0, A).}
+  \note[item]{The reduce lookahead is computed, by first computing lookback and then FOLLOW of the left-hand-side symbol.}
+  \note[item]{There is a lookback if the right-hand-side of the enhanced production includes the given enhanced state.}
+  \note[item]{In enhanced state (6, 4) the lookahead is computed as FOLLOW(0, S).}
 \end{frame}
 
 \begin{frame}{Non-canonical RTN}
@@ -516,9 +522,9 @@
   \end{tikzpicture}
   }
   \note[item]{In this case there is no difference between the optimized RTN and the non-canonical one.}
-  \note[item]{In general in each reduce state, add a call transition for each lookahead (state, symbol).}
-  \note[item]{That way there is a call transition for each lookahead symbol as well.}
-  \note[item]{This is a special case of non-canonical parsing.}
+  \note[item]{In general in each reduce state, a call transition is added for each lookahead enhanced symbol.}
+  \note[item]{This is a special case of non-canonical construction.}
+  \note[item]{Scanner section is the same as constructing an automaton for context-aware scanning for each LR state and connecting it with a call transition.}
 \end{frame}
 
 \begin{frame}[t]{GLR}
